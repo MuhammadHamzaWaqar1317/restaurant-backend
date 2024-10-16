@@ -12,30 +12,32 @@ require("dotenv").config();
 
 exports.signUp = async (req, res) => {
   try {
-    const { email, name, password } = req.body;
+    const { email, name, password, socketId } = req.body;
+    console.log("socket ID ", socketId);
 
     const secPassword = await bcrypt.hash(password, constant.salt);
-    console.log(secPassword);
+
     const user = await User.create({
       email,
       name,
       password: secPassword,
-      level: "0",
       role: "user",
+      address: "",
+      contactNum: 0,
     });
     const authToken = jwt.sign(
       {
-        email: user.email,
-        role: user.role,
-        name: user.name,
-        level: user.level,
+        _id: user._id,
       },
       process.env.JWT_SECRET
     );
-    console.log("Here SignUp", user);
+    io.to(socketId).emit("sign_up_successfull", {
+      message: "SignUp Successfull",
+    });
     res.send(authToken);
   } catch (error) {
     console.log(error);
+    return res.status(400).send({ message: "Email already in Use" });
   }
 };
 

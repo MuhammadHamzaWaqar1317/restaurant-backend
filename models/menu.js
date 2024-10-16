@@ -7,6 +7,7 @@ const menuSchema = mongoose.Schema(
     description: { type: String },
     price: { type: String },
     size: { type: String },
+    img: { type: String },
   },
   { timestamps: true, collection: "menu" }
 );

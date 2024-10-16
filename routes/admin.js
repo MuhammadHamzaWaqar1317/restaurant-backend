@@ -2,6 +2,7 @@ const express = require("express");
 var router = express.Router();
 
 const menu = require("../controllers/admin/menu");
+const branch = require("../controllers/admin/branch");
 
 router
   .route("/menu")
@@ -9,5 +10,12 @@ router
   .get(menu.getMenu)
   .patch(menu.updateMenuItem)
   .delete(menu.deleteMenuItem);
+
+router
+  .route("/branch")
+  .get(branch.getbranch)
+  .post(branch.addbranch)
+  .patch(branch.updatebranch)
+  .delete(branch.deleteBranch);
 
 module.exports = router;

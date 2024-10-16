@@ -5,12 +5,13 @@ const userSchema = mongoose.Schema(
     name: { type: String },
     password: { type: String },
     email: { type: String, unique: true },
-    level: { type: String },
     role: { type: String },
+    address: { type: String },
+    contactNum: {},
   },
-  { timestamps: true, collection: "employee" }
+  { timestamps: true, collection: "User" }
 );
 
-const User = mongoose.model("employee", userSchema);
+const User = mongoose.model("User", userSchema);
 
 module.exports = { User };
