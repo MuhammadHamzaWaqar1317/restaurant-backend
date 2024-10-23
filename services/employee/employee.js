@@ -28,6 +28,7 @@ exports.signUp = async (req, res) => {
     const authToken = jwt.sign(
       {
         _id: user._id,
+        role: "user",
       },
       process.env.JWT_SECRET
     );
@@ -57,16 +58,10 @@ exports.signIn = async (req, res) => {
         .status(401)
         .send({ message: "Incorrect Username or Password" });
     }
-    const subscribedMealUser = await employeeMealSubscription.findOne({
-      employeeId: user._id,
-    });
     const authToken = jwt.sign(
       {
-        email: user.email,
+        _id: user._id,
         role: user.role,
-        name: user.name,
-        level: user.level,
-        mealTime: subscribedMealUser.mealTime,
       },
       process.env.JWT_SECRET
     );

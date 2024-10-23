@@ -9,8 +9,8 @@ const authToken = (req, res, next) => {
     const token = authHeader.split(" ")[1];
     console.log(authHeader);
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { email, role } = decoded;
-    res.locals.email = email;
+    const { _id, role } = decoded;
+    res.locals._id = _id;
     res.locals.role = role;
 
     next();

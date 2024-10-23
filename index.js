@@ -23,7 +23,7 @@ app.use(cors());
 
 app.use(
   "/authenticated",
-  // require("./middleware/authToken"),
+  require("./middleware/authToken"),
   require("./routes/authenticated")
 );
 app.use("/unauthenticated", require("./routes/unauthenticated"));

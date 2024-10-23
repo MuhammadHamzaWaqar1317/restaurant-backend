@@ -1,5 +1,6 @@
 const { Reservation } = require("../../models/reservation");
 const { Branch } = require("../../models/branch");
+const { User } = require("../../models/user");
 const { io } = require("../../socket");
 const ObjectId = require("mongodb").ObjectId;
 
@@ -56,10 +57,62 @@ const checkCapacity = async (body, updateReservation) => {
 
 exports.getReservation = async (req, res) => {
   try {
-    const result = await Reservation.find({});
-    result.forEach((item) => {
-      item.toObject();
-    });
+    let fetchData = [
+      {
+        $addFields: {
+          customerId: { $toObjectId: "$customerId" },
+          branchId: { $toObjectId: "$branchId" },
+        },
+      },
+      {
+        $lookup: {
+          from: "User",
+          localField: "customerId",
+          foreignField: "_id",
+          as: "customerDetails",
+        },
+      },
+      {
+        $unwind: { path: "$customerDetails" },
+      },
+      {
+        $addFields: {
+          customerName: "$customerDetails.name",
+        },
+      },
+      { $unset: "customerDetails" },
+      {
+        $lookup: {
+          from: "branch",
+          localField: "branchId",
+          foreignField: "_id",
+          as: "branchDetails",
+        },
+      },
+      {
+        $unwind: { path: "$branchDetails" },
+      },
+      {
+        $addFields: {
+          branchAddress: "$branchDetails.address",
+        },
+      },
+      { $unset: "branchDetails" },
+    ];
+    if (res.locals.role == "user") {
+      const userFetch = {
+        $match: {
+          customerId: res.locals._id,
+        },
+      };
+      fetchData = [{ ...userFetch }, ...fetchData];
+    }
+    const result = await Reservation.aggregate([...fetchData]);
+    console.log(result);
+
+    // result.forEach((item) => {
+    //   item.toObject();
+    // });
     res.status(200).send(result);
   } catch (error) {
     console.log(error);
@@ -78,6 +131,7 @@ exports.addReservation = async (req, res) => {
       });
     } else {
       const reservationSuccessfull = await Reservation.create({
+        customerId: res.locals._id,
         branchId,
         startTime,
         endTime,
@@ -85,8 +139,15 @@ exports.addReservation = async (req, res) => {
         peopleQty,
       });
 
-      res.status(200).send({
+      const user = await User.findOne({ _id: res.locals._id });
+      console.log(user);
+
+      io.emit("reservation_added", {
         ...reservationSuccessfull.toObject(),
+        customerName: user.name,
+      });
+      res.status(200).send({
+        message: "Reservation Created Successfully",
       });
     }
   } catch (error) {
@@ -96,7 +157,16 @@ exports.addReservation = async (req, res) => {
 };
 
 exports.updateReservation = async (req, res) => {
-  const { branchId, startTime, endTime, date, peopleQty, _id } = req.body;
+  const {
+    branchId,
+    customerId,
+    customerName,
+    startTime,
+    endTime,
+    date,
+    peopleQty,
+    _id,
+  } = req.body;
 
   try {
     //                            REFER to later I think clash :)
@@ -122,7 +192,16 @@ exports.updateReservation = async (req, res) => {
             peopleQty,
           }
         );
-
+        io.emit("reservation_updated", {
+          branchId,
+          startTime,
+          endTime,
+          date,
+          peopleQty,
+          customerId,
+          customerName,
+          _id,
+        });
         res.status(200).send({
           message: "Reservation updated Successfully",
         });
@@ -146,6 +225,17 @@ exports.updateReservation = async (req, res) => {
           }
         );
 
+        io.emit("reservation_updated", {
+          branchId,
+          startTime,
+          endTime,
+          date,
+          peopleQty,
+          customerId,
+          customerName,
+          _id,
+        });
+
         res.status(200).send({
           message: "Reservation updated Successfully",
         });
@@ -159,9 +249,11 @@ exports.updateReservation = async (req, res) => {
 
 exports.deleteReservation = async (req, res) => {
   try {
-    const { _id } = req.query;
+    const { _id, customerId } = req.query;
 
     const result = await Reservation.deleteOne({ _id });
+
+    io.emit("reservation_deleted", { _id, customerId });
 
     res.status(200).send({ message: "Branch deleted Successfully" });
   } catch (error) {
