@@ -52,14 +52,14 @@ exports.addMenuItem = async (req, res) => {
 
 exports.updateMenuItem = async (req, res) => {
   try {
-    const { name, category, description, price, _id } = req.body;
+    const { name, category, description, price, _id, img } = req.body;
     const result = await Menu.updateOne(
       { _id },
-      { name, category, description, price }
+      { name, category, description, price, img }
     );
     io.emit("menu_item_updated", req.body);
 
-    res.status(200).send({ message: "Item added Successfully" });
+    res.status(200).send({ message: "Item Updated Successfully" });
   } catch (error) {
     console.log(error);
   }

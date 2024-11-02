@@ -255,7 +255,7 @@ exports.deleteReservation = async (req, res) => {
 
     io.emit("reservation_deleted", { _id, customerId });
 
-    res.status(200).send({ message: "Branch deleted Successfully" });
+    res.status(200).send({ message: "Reservation deleted Successfully" });
   } catch (error) {
     console.log(error);
   }

@@ -8,6 +8,10 @@ exports.signIn = async (req, res) => {
   employee.signIn(req, res);
 };
 
+exports.getUserInfo = async (req, res) => {
+  employee.getUserInfo(req, res);
+};
+
 exports.subscribe = async (req, res) => {
   employee.subscribe(req, res);
 };

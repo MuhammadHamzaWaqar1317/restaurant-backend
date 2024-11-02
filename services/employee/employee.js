@@ -71,6 +71,15 @@ exports.signIn = async (req, res) => {
   }
 };
 
+exports.getUserInfo = async (req, res) => {
+  try {
+    const result = await User.findOne({ _id: res.locals._id });
+    res.status(200).send(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 exports.subscribe = async (req, res) => {
   // Add authnetication so user can only skip his meal
   try {
