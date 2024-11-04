@@ -1,5 +1,6 @@
 const { io } = require("../../socket");
 const { MenuCategory } = require("../../models/menuCategory");
+const { Menu } = require("../../models/menu");
 
 exports.getMenuCategory = async (req, res) => {
   try {
@@ -55,6 +56,7 @@ exports.deleteMenuCategory = async (req, res) => {
     const { _id } = req.query;
 
     const result = await MenuCategory.deleteOne({ _id });
+    const deleteCategoryMenuItems = await Menu.deleteMany({ categoryId: _id });
     io.emit("menu_category_deleted", { _id });
 
     res.status(200).send({ message: "Menu Category deleted Successfully" });

@@ -6,13 +6,13 @@ exports.getMenu = async (req, res) => {
     const result = await Menu.aggregate([
       {
         $group: {
-          _id: "$category",
+          _id: "$categoryId",
           items: {
             $push: {
               name: "$name",
               price: "$price",
               description: "$description",
-              category: "$category",
+              categoryId: "$categoryId",
               img: "$img",
               _id: "$_id",
             },
@@ -34,10 +34,10 @@ exports.getMenu = async (req, res) => {
 
 exports.addMenuItem = async (req, res) => {
   try {
-    const { name, category, description, price, img } = req.body;
+    const { name, categoryId, description, price, img } = req.body;
     const result = await Menu.create({
       name,
-      category,
+      categoryId,
       description,
       price,
       img,
@@ -52,10 +52,10 @@ exports.addMenuItem = async (req, res) => {
 
 exports.updateMenuItem = async (req, res) => {
   try {
-    const { name, category, description, price, _id, img } = req.body;
+    const { name, categoryId, description, price, _id, img } = req.body;
     const result = await Menu.updateOne(
       { _id },
-      { name, category, description, price, img }
+      { name, categoryId, description, price, img }
     );
     io.emit("menu_item_updated", req.body);
 
@@ -67,11 +67,11 @@ exports.updateMenuItem = async (req, res) => {
 
 exports.deleteMenuItem = async (req, res) => {
   try {
-    const { _id, category } = req.query;
+    const { _id, categoryId } = req.query;
     console.log("id delete ", _id);
 
     const result = await Menu.deleteOne({ _id });
-    io.emit("menu_item_deleted", { _id, category });
+    io.emit("menu_item_deleted", { _id, categoryId });
 
     res.status(200).send({ message: "Item deleted Successfully" });
   } catch (error) {
