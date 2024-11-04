@@ -5,6 +5,7 @@ const menu = require("../controllers/admin/menu");
 const branch = require("../controllers/admin/branch");
 const reservation = require("../controllers/admin/reservation");
 const order = require("../controllers/admin/order");
+const menuCategory = require("../controllers/admin/menuCategory");
 
 router
   .route("/menu")
@@ -12,6 +13,13 @@ router
   .get(menu.getMenu)
   .patch(menu.updateMenuItem)
   .delete(menu.deleteMenuItem);
+
+router
+  .route("/menu-category")
+  .get(menuCategory.getMenuCategory)
+  .post(menuCategory.addMenuCategory)
+  .patch(menuCategory.updateMenuCategory)
+  .delete(menuCategory.deleteMenuCategory);
 
 router
   .route("/branch")
