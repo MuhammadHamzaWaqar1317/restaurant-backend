@@ -251,9 +251,11 @@ exports.deleteReservation = async (req, res) => {
   try {
     const { _id, customerId } = req.query;
 
+    const { date } = await Reservation.findOne({ _id });
+
     const result = await Reservation.deleteOne({ _id });
 
-    io.emit("reservation_deleted", { _id, customerId });
+    io.emit("reservation_deleted", { _id, customerId, date });
 
     res.status(200).send({ message: "Reservation deleted Successfully" });
   } catch (error) {
