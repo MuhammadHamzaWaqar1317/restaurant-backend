@@ -13,23 +13,26 @@ require("dotenv").config();
 
 exports.signUp = async (req, res) => {
   try {
+    const { admin, user } = constant.roles;
     const { email, name, password, socketId } = req.body;
     console.log("socket ID ", socketId);
 
     const secPassword = await bcrypt.hash(password, constant.salt);
 
-    const user = await User.create({
+    const userPresent = await User.findOne();
+
+    const newUser = await User.create({
       email,
       name,
       password: secPassword,
-      role: "user",
+      role: !userPresent ? admin : user,
       address: "",
-      contactNum: 0,
+      contactNum: "49",
     });
     const authToken = jwt.sign(
       {
-        _id: user._id,
-        role: "user",
+        _id: newUser._id,
+        role: !userPresent ? admin : user,
       },
       process.env.JWT_SECRET
     );
@@ -39,7 +42,7 @@ exports.signUp = async (req, res) => {
     res.send(authToken);
   } catch (error) {
     console.log(error);
-    return res.status(400).send({ message: "Email already in Use" });
+    return res.status(400).send({ error: "Email already in Use" });
   }
 };
 
@@ -49,15 +52,11 @@ exports.signIn = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res
-        .status(401)
-        .send({ message: "Incorrect Username or Password" });
+      return res.status(401).send({ error: "Incorrect Username or Password" });
     }
     const validatePassword = await bcrypt.compare(password, user.password);
     if (!validatePassword) {
-      return res
-        .status(401)
-        .send({ message: "Incorrect Username or Password" });
+      return res.status(401).send({ error: "Incorrect Username or Password" });
     }
     const authToken = jwt.sign(
       {
