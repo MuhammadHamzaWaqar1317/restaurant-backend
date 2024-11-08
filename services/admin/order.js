@@ -5,8 +5,12 @@ const { io } = require("../../socket");
 
 exports.addOrder = async (req, res) => {
   try {
-    let { order, type, branchId = "" } = req.body;
-    console.log(req.body);
+    let { order, type, branchId = "", address, contactNum, email } = req.body;
+
+    const updateUserCreds = await User.updateOne(
+      { _id: res.locals._id },
+      { address, contactNum, email }
+    );
 
     const menuItemsId = order?.map(({ itemId }) => itemId);
     const menu = await Menu.find({ _id: { $in: menuItemsId } }, { img: 0 });

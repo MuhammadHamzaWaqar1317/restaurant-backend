@@ -7,6 +7,7 @@ const { employeeMealSubscription } = require("../../models/employeeMealSub");
 const { mealComplaint } = require("../../models/mealComplaint");
 const constant = require("../../constants/constant");
 const { io } = require("../../socket");
+const { sendOtp, verifyOtp } = require("../OTP/Otp");
 
 require("dotenv").config();
 
@@ -73,279 +74,57 @@ exports.signIn = async (req, res) => {
 
 exports.getUserInfo = async (req, res) => {
   try {
-    const result = await User.findOne({ _id: res.locals._id });
-    res.status(200).send(result);
-  } catch (error) {
-    console.log(error);
-  }
-};
+    const { admin } = constant.roles;
 
-exports.subscribe = async (req, res) => {
-  // Add authnetication so user can only skip his meal
-  try {
-    // console.log(socket);
-    console.log(io);
-
-    // socket.on("newSubscriber", () => {
-    //   console.log("socketon in subscribe");
-    // });
-    io.emit("newSubscriber", { message: "Hello from server" });
-    // socket.emit("newSubscriber", { message: "Hello from server" });
-    const { name, email, level, mealTime, status } = req.body;
-    console.log("status", status);
-
-    const user = await User.findOne({ email });
-    console.log("user find", user);
-
-    const alreadySubscribed = await employeeMealSubscription.findOne({
-      employeeId: user._id,
-      status: constant.subscribe,
-    });
-    console.log(alreadySubscribed);
-
-    // console.log(reSubscribeUser);
-
-    console.log("alreadySubbed", alreadySubscribed);
-
-    if (alreadySubscribed) {
-      return res
-        .status(403)
-        .send({ error: "User has already availed meal Subscription" });
-    }
-
-    const reSubscribeUser = await employeeMealSubscription.updateOne(
-      {
-        employeeId: user._id,
-        status: constant.unsubscribe,
-      },
-      { mealTime, status: constant.subscribe }
-    );
-    console.log(reSubscribeUser, "resubUser");
-
-    if (reSubscribeUser.modifiedCount >= 1) {
-      console.log("in reSub if");
-
-      return res.status(200).send({ message: "User Subscription Updated" });
-    }
-    const result = await employeeMealSubscription.create({
-      employeeId: user._id,
-      mealTime: mealTime,
-      status: status,
-      lunch: [],
-      dinner: [],
-    });
-
-    socket.emit("newSubscriber", { message: "Hello from server" });
-    return res.status(200).send({ message: "Record created successfully " });
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .send({ error: "User with same email already exists" });
-  }
-};
-
-exports.skipMeal = async (req, res) => {
-  console.log("In API SkipMeal");
-  const skipMealObj = req.body;
-  let { email, lunch, dinner } = skipMealObj;
-  console.log(lunch);
-  console.log(dinner);
-
-  if (lunch.length != 0) {
-    console.log("in lunch condtioj");
-
-    let [dateObj] = lunch;
-    dateObj = { ...dateObj, _id: uuidv4() };
-    lunch = [dateObj];
-  }
-  if (dinner.length != 0) {
-    console.log("in dinner condtioj");
-    let [dateObj] = dinner;
-    dateObj = { ...dateObj, _id: uuidv4() };
-    dinner = [dateObj];
-  }
-
-  try {
-    const user = await User.findOne({ email: email });
-
-    if (user) {
-      try {
-        if (res.locals.email != email && res.locals.role == "user") {
-          return res
-            .status(404)
-            .send({ error: "Cannot Skip Meal of another user" });
-        }
-        const subscribedEmployee = await employeeMealSubscription.findOne({
-          employeeId: user._id,
-        });
-        console.log("subscribed employee", subscribedEmployee);
-        if (!subscribedEmployee) {
-          return res
-            .status(403)
-            .send({ error: "User has not availed meal Subscription" });
-        }
-
-        if (
-          !subscribedEmployee.mealTime.includes(constant.lunch) &&
-          lunch.length != 0
-        ) {
-          return res
-            .status(404)
-            .send({ error: "User is not Subscribed to Lunch" });
-        }
-        if (
-          !subscribedEmployee.mealTime.includes(constant.dinner) &&
-          dinner.length != 0
-        ) {
-          return res
-            .status(404)
-            .send({ error: "User is not Subscribed to Dinner" });
-        }
-        if (subscribedEmployee?.lunch.length != 0 && lunch.length != 0) {
-          subscribedEmployee?.lunch?.forEach(({ start, end }) => {
-            if (start == lunch[0].start && end == lunch[0].end) {
-              lunch = [];
-              return;
-            }
-          });
-        }
-
-        if (subscribedEmployee?.dinner.length != 0 && dinner.length != 0) {
-          subscribedEmployee?.dinner?.forEach(({ start, end }) => {
-            if (start == dinner[0].start && end == dinner[0].end) {
-              dinner = [];
-              return;
-            }
-          });
-        }
-
-        try {
-          const update = await employeeMealSubscription.updateOne(
-            { employeeId: user._id },
-            [
-              {
-                $set: {
-                  lunch: {
-                    $cond: {
-                      if: { $in: [constant.lunch, "$mealTime"] },
-                      then: { $setUnion: ["$lunch", lunch] },
-                      else: "$lunch",
-                    },
-                  },
-                  dinner: {
-                    $cond: {
-                      if: { $in: [constant.dinner, "$mealTime"] },
-                      then: { $setUnion: ["$dinner", dinner] },
-                      else: "$dinner",
-                    },
-                  },
-                },
-              },
-            ]
-          );
-          console.log(update);
-          return res
-            .status(200)
-            .send({ message: "Record Created Successfully" });
-        } catch (error) {
-          console.log(error);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-
-      return res.send({ message: "Found" });
+    if (res.locals.role == admin) {
+      const result = await User.find({});
+      res.status(200).send(result);
     } else {
-      return res.status(404).send({ error: "User not found" });
+      const result = await User.findOne({ _id: res.locals._id });
+      res.status(200).send(result);
     }
   } catch (error) {
-    console.log("Error skipMeal Post", error);
-    return res.status(404).send({ error: "An error Occurred" });
-  }
-};
-
-exports.getSkipMealDates = async (req, res) => {
-  try {
-    const email = res.locals.email;
-
-    const user = await User.findOne({ email });
-    const subscribedUser = await employeeMealSubscription.findOne({
-      employeeId: user._id,
-      status: constant.subscribe,
-    });
-    console.log("in get skip Datess", subscribedUser);
-
-    res.send(subscribedUser);
-  } catch (error) {
-    console.log("in error");
-
     console.log(error);
   }
 };
 
-exports.deleteSkipMealDate = async (req, res) => {
+exports.forgetPassword = async (req, res) => {
   try {
-    // console.log(req.body);
-
-    const { email, _id } = req.query;
-    console.log(email, _id, "req.query");
-
-    // let { mealTime } = req.body;
-    // mealTime = mealTime?.map((item) => item.toLowerCase());
+    const { email } = req.body;
     console.log(email);
 
-    // console.log(mealTime);
-    console.log("in Delete skip Meal ");
-    console.log(_id);
-
-    const user = await User.findOne({ email });
-    const subscribedUser = await employeeMealSubscription.updateOne(
-      {
-        employeeId: user._id,
-      },
-      {
-        $pull: { lunch: { _id }, dinner: { _id } },
-      }
-    );
-    if (subscribedUser.modifiedCount >= 1) {
-      res.status(200).send({ message: "Meal Deleted Successfully" });
+    const found = await User.findOne({ email });
+    if (!found) {
+      return res.status(404).send({ error: "Email does not exists" });
     }
-    console.log(subscribedUser);
+
+    await sendOtp(email);
+
+    res.send({ message: "OTP sent successfully" });
   } catch (error) {
     console.log(error);
   }
 };
 
-exports.mealComplaint = async (req, res) => {
+exports.verifyOtp = async (req, res) => {
   try {
-    const { email, ...remainingObj } = req.body;
-
-    const user = await User.findOne({ email: req.body.email });
-    if (!user) {
-      return res.status(404).send({ error: "User not found" });
-    }
-    if (res.locals.email != email && res.locals.role == "user") {
-      return res
-        .status(404)
-        .send({ error: "Cannot Issue Meal Complaint of another user" });
-    }
-    const subscribedEmployee = await employeeMealSubscription.findOne({
-      employeeId: user._id,
-    });
-
-    if (!subscribedEmployee) {
-      return res
-        .status(403)
-        .send({ error: "User has not availed meal Subscription" });
-    }
-    const result = await mealComplaint.create({
-      employeeId: user._id,
-      ...remainingObj,
-    });
-    return res.status(200).send({ message: "Record created Successfully" });
+    await verifyOtp(req, res);
   } catch (error) {
     console.log(error);
-    return res.status(404).send({ error: "An error occurred " });
+  }
+};
+
+exports.createNewPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    console.log(email, newPassword);
+
+    const secPassword = await bcrypt.hash(newPassword, constant.salt);
+
+    const result = await User.updateOne({ email }, { password: secPassword });
+
+    res.status(200).send({ message: "Password Reset Successfull" });
+  } catch (error) {
+    console.log(error);
   }
 };

@@ -12,22 +12,14 @@ exports.getUserInfo = async (req, res) => {
   employee.getUserInfo(req, res);
 };
 
-exports.subscribe = async (req, res) => {
-  employee.subscribe(req, res);
+exports.forgetPassword = async (req, res) => {
+  employee.forgetPassword(req, res);
 };
 
-exports.skipMeal = async (req, res) => {
-  employee.skipMeal(req, res);
+exports.verifyOtp = async (req, res) => {
+  employee.verifyOtp(req, res);
 };
 
-exports.getSkipMealDates = async (req, res) => {
-  employee.getSkipMealDates(req, res);
-};
-
-exports.deleteSkipMealDates = async (req, res) => {
-  employee.deleteSkipMealDate(req, res);
-};
-
-exports.mealComplaint = async (req, res) => {
-  employee.mealComplaint(req, res);
+exports.createNewPassword = async (req, res) => {
+  employee.createNewPassword(req, res);
 };

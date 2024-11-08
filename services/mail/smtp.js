@@ -1,50 +1,27 @@
-function mail(mealNumber) {
-  const axios = require("axios");
-  const HttpException = require("./HttpException");
+const axios = require("axios");
+const HttpException = require("./HttpException");
+const nodemailer = require("nodemailer");
 
-  require("dotenv").config();
+require("dotenv").config();
 
-  const sendEmail = async (to, obj) => {
-    try {
-      const response = await axios.post(
-        `${process.env.MAILING_SERVER}/sendEmail`,
-        {
-          host: process.env.SMTP_HOST,
-          port: process.env.SMTP_PORT,
-          secure: "false",
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASSWORD,
-          from: process.env.SMTP_FROM,
-          to,
-          subject: obj.msg,
-          html: obj.html,
-        },
-        { headers: { "Content-Type": "application/json" } }
-      );
+const transporter = nodemailer.createTransport({
+  host: "smtp.ethereal.email",
+  port: 587,
+  auth: {
+    user: "prince.corkery43@ethereal.email",
+    pass: "jCPcqPhvzdwCs9E3RX",
+  },
+});
 
-      return response;
-    } catch (error) {
-      console.error(error);
-      throw new HttpException(error.message, "ResponseCode.BAD_REQUEST");
-    }
-  };
+exports.sendEmail = async (email, OTP) => {
+  const info = await transporter.sendMail({
+    from: "prince.corkery43@ethereal.email", // sender address
+    to: `${email}`, // list of receivers
+    subject: "Hello ✔", // Subject line
+    text: `${OTP}`, // plain text body
+    html: `<b>${OTP}</b>`, // html body
+  });
 
-  // Usage example
-  const mailData = {
-    msg: "Sofit meal request",
-    html: `Today meal numbers :${mealNumber} `,
-  };
-  const sendMealReq = async () => {
-    try {
-      const result = await sendEmail("hamzawaqar1317@gmail.com", mailData);
-      console.log("mail sent");
-      console.log(result);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  sendMealReq();
-}
-
-module.exports = mail;
+  console.log("Message sent: %s", info.messageId);
+  console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+};
