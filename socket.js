@@ -3,9 +3,10 @@ const http = require("http");
 const app = express();
 const socket = require("socket.io");
 const server = http.createServer(app);
+require("dotenv").config();
 const io = socket(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_LINK,
   },
 });
 

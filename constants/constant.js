@@ -7,8 +7,3 @@ exports.roles = {
   user: "user",
   passwordReset: "passwordReset",
 };
-
-exports.lunch = "Lunch";
-exports.dinner = "Dinner";
-exports.subscribe = "Subscribed";
-exports.unsubscribe = "Unsubscribed";
